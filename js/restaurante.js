@@ -870,7 +870,7 @@
       .onSnapshot(snapshot => {
         rawRestauranteDocs = [];
         snapshot.forEach(doc => {
-          rawRestauranteDocs.push({ id: doc.id, ...doc.data() });
+          rawRestauranteDocs.push({ id: doc.id, ...window.EventLocation.applyJornadaOverride(doc.data()) });
         });
         combineAndRenderReservations();
       }, err => {
@@ -883,7 +883,7 @@
       .onSnapshot(snapshot => {
         rawSalonesDocs = [];
         snapshot.forEach(doc => {
-          rawSalonesDocs.push({ id: doc.id, ...doc.data() });
+          rawSalonesDocs.push({ id: doc.id, ...window.EventLocation.applyJornadaOverride(doc.data()) });
         });
         combineAndRenderReservations();
       }, err => {

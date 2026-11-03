@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const {isRestaurant, returnToEvents, changeLinkedSalon} = require('../js/eventLocation');
+const {isRestaurant, returnToEvents, changeLinkedSalon, applyJornadaOverride} = require('../js/eventLocation');
 function fixture(salon = 'Restaurante', fail = false) {
   const records = new Map([
     ['reservas_salones/event', {salon, hotel:'Guadiana', desvinculado:true, vinculoRoto:true, detalles:{pax_adultos:3}, servicios:[{concepto:'Almuerzo',uds:3}]}],
@@ -17,7 +17,14 @@ function fixture(salon = 'Restaurante', fail = false) {
       const writes = [];
       await fn({
         get:async ref=>({exists:records.has(ref.key),data:()=>records.get(ref.key)}),
-        update:(ref,value)=>writes.push(()=>records.set(ref.key,{...records.get(ref.key),...value})),
+        update:(ref,value)=>writes.push(()=>{
+          const next = structuredClone(records.get(ref.key));
+          for (const [key,val] of Object.entries(value)) {
+            if (key === 'detalles.jornada') next.detalles = {...next.detalles,jornada:val};
+            else next[key] = val;
+          }
+          records.set(ref.key,next);
+        }),
         set:(ref,value)=>writes.push(()=>records.set(ref.key,{...records.get(ref.key),...value})),
         delete:ref=>writes.push(()=>records.delete(ref.key))
       });
@@ -95,4 +102,44 @@ test('rechaza cambios si otro usuario ya movió el evento',async()=>{
   const {db,records}=fixture('Otro salón');
   await assert.rejects(returnToEvents(db,'event','Eventos Grupos Alarcos'),/ubicación ha cambiado/);
   assert.equal(records.get('reservas_salones/event').salon,'Otro salón');
+});
+
+function linkedFixture(salon = 'Marte', fail = false) {
+  const f = fixture(salon, fail);
+  Object.assign(f.records.get('reservas_salones/event'), {desvinculado:false, vinculoRoto:false, fecha:'2027-11-04', origen:'Nexus Groups', detalles:{jornada:'sala', pax_adultos:3, hora:'18:40'}});
+  return f;
+}
+test('cambiar solo jornada conserva servicio, personas, hora y vínculo', async()=>{
+  const {db,records}=linkedFixture();
+  await changeLinkedSalon(db,'event','Marte','Marte','tarde','sala');
+  const e=records.get('reservas_salones/event');
+  assert.equal(e.detalles.jornada,'tarde');
+  assert.equal(e.detalles.pax_adultos,3);
+  assert.equal(e.detalles.hora,'18:40');
+  assert.equal(e.desvinculado,false);
+  assert.deepEqual(e.servicios,[{concepto:'Almuerzo',uds:3}]);
+  // Grupos merges its calculated details again. Its merge preserves root overrides.
+  const synced={...e, detalles:{...e.detalles,jornada:'sala',pax_adultos:8}};
+  assert.equal(applyJornadaOverride(synced).detalles.jornada,'tarde');
+  assert.equal(applyJornadaOverride(synced).detalles.pax_adultos,8);
+  assert.equal(applyJornadaOverride({...synced,hotel:'Cumbria'}).detalles.jornada,'sala');
+  assert.equal(applyJornadaOverride({...synced,fecha:'2027-11-05'}).detalles.jornada,'sala');
+});
+test('rechaza una jornada concurrente o inválida sin escribir', async()=>{
+  const {db,records}=linkedFixture();
+  await assert.rejects(changeLinkedSalon(db,'event','Marte','Marte','tarde','cena'),/jornada ha cambiado/);
+  await assert.rejects(changeLinkedSalon(db,'event','Marte','Marte','incorrecta','sala'),/válida/);
+  assert.equal(records.get('reservas_salones/event').detalles.jornada,'sala');
+});
+test('fallo de guardado no cambia jornada', async()=>{
+  const {db,records}=linkedFixture('Marte',true);
+  await assert.rejects(changeLinkedSalon(db,'event','Marte','Marte','tarde','sala'),/Sin permisos/);
+  assert.equal(records.get('reservas_salones/event').detalles.jornada,'sala');
+});
+test('cambiar jornada en Restaurante actualiza su copia', async()=>{
+  const {db,records}=linkedFixture('Restaurante');
+  await changeLinkedSalon(db,'event','Restaurante','Restaurante','tarde','sala');
+  const mirror=records.get('reservas_restaurante/salon_event');
+  assert.equal(mirror.turno,'tarde');
+  assert.equal(applyJornadaOverride({...mirror,turno:'sala'}).turno,'tarde');
 });

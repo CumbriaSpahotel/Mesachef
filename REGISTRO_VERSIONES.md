@@ -13,13 +13,20 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.12`
+- **Versión:** `v10.3.13`
 - **Última Actualización:** 03/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.13] - 03/11/2026
+- **Módulos:** Salones / Restaurante
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Jornada editable en eventos vinculados a Grupos y ajuste persistente tras sincronizar. Conserva personas, servicios y vínculo; comprueba disponibilidad al guardar.
+  - Los eventos de Sala sin hora se muestran en el cuadrante como ocupación de día completo hasta elegir jornada.
 
 ### [v10.3.12] - 03/11/2026
 - **Módulos:** Salones

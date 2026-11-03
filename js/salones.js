@@ -485,7 +485,7 @@
 
                 loadedReservations = [];
                 snapshot.forEach(doc => {
-                    const data = doc.data();
+                    const data = window.EventLocation.applyJornadaOverride(doc.data());
                     const hDoc = normalize(data.hotel);
                     // STRICT FILTER: Only load reservations that strictly belong to current hotel
                     if (!hDoc || hDoc !== hLocal) return;
@@ -707,7 +707,8 @@
                 // Relaxed 'Todo' check: matches 'todo', 'dia', 'completo' or if it's not half-day
                 const evTodo = group.find(r => {
                     const j = (r._displayJornada || 'todo').toLowerCase();
-                    return j === 'todo' || j.includes('todo') || j.includes('dia') || j.includes('completo');
+                    const hora = r.detalles?.hora || r.servicios?.[0]?.hora || '';
+                    return j === 'todo' || j.includes('todo') || j.includes('dia') || j.includes('completo') || (j === 'sala' && !/^\d{1,2}:\d{2}$/.test(hora));
                 });
 
                 if (evTodo) {
@@ -1009,7 +1010,7 @@
             .then(snapshot => {
                 allReservations = [];
                 snapshot.forEach(doc => {
-                    allReservations.push({ id: doc.id, ...doc.data() });
+                    allReservations.push({ id: doc.id, ...window.EventLocation.applyJornadaOverride(doc.data()) });
                 });
                 hasLoadedAll = true;
                 console.log(`Global Search: Loaded ${allReservations.length} records.`);
@@ -1470,7 +1471,7 @@
 
             if (isLinkedNexus) {
                 const mt = document.getElementById("modalTitle");
-                if (mt) mt.innerText = "Evento Nexus Groups (Cambiar salón)";
+                if (mt) mt.innerText = "Evento Nexus Groups (Salón y jornada)";
 
                 if (nexusBanner) {
                     nexusBanner.classList.remove("hidden");
@@ -1481,14 +1482,15 @@
                 // Lock fields and action buttons
                 setModalFieldsDisabled(true);
                 document.getElementById("evt-salon").disabled = false;
-                // A linked event may only change its location, never its service rows.
+                document.getElementById("evt-jornada").disabled = false;
+                // Linked events can change location and shift without altering service rows.
                 document.getElementById("evt-salon").onchange = function () {};
 
                 if (btnGuardarEl) {
                     btnGuardarEl.disabled = false;
                     btnGuardarEl.classList.remove("opacity-50", "cursor-not-allowed", "pointer-events-none");
                     btnGuardarEl.style.display = 'inline-block';
-                    btnGuardarEl.title = "Guardar solo el salón y mantener el vínculo con Grupos.";
+                    btnGuardarEl.title = "Guardar salón y jornada manteniendo el vínculo con Grupos.";
                 }
                 if (btnEliminarEl) {
                     btnEliminarEl.disabled = true;
@@ -1855,6 +1857,7 @@
     };
 
     window.updateRentalPrice = function (forceUpdateConcept = false) {
+        if (currentBookingId && isNexusLinked(window._resRegistry[currentBookingId])) return;
         const hotel = getActiveHotel();
         const salonName = document.getElementById("evt-salon").value;
         const jornada = document.getElementById("evt-jornada").value;
@@ -2007,10 +2010,15 @@
                 if (key !== "Mreserva") { alert("Clave incorrecta (v6.0)"); return; }
                 try {
                     if (btn) { btn.disabled = true; btn.innerText = "GUARDANDO…"; }
-                    await window.EventLocation.changeLinkedSalon(db, currentBookingId, salon, existing.salon);
+                    const jornada = document.getElementById("evt-jornada").value;
+                    if (!['cancelada', 'anulada'].includes(existing.estado)) {
+                        const availability = await window.MesaChef.checkSalonAvailability(db, existing.hotel, salon, existing.fecha, jornada, currentBookingId);
+                        if (!availability.available) throw new Error(availability.reason);
+                    }
+                    await window.EventLocation.changeLinkedSalon(db, currentBookingId, salon, existing.salon, jornada, existing.detalles?.jornada || "todo");
                     closeModal();
                 } catch (error) {
-                    alert("No se ha podido cambiar el salón: " + error.message);
+                    alert("No se han podido guardar el salón y la jornada: " + error.message);
                 } finally {
                     if (btn) { btn.disabled = false; btn.innerText = originalText; }
                 }

@@ -110,7 +110,8 @@
                     const st = (data.estado || "").toLowerCase();
                     if (st === 'cancelada' || st === 'anulada') return;
 
-                    const otherShift = getShift(data.detalles?.jornada || "todo");
+                    const override = data.jornadaOverrideHotel === data.hotel && data.jornadaOverrideFecha === data.fecha ? data.jornadaOverride : null;
+                    const otherShift = getShift(override || data.detalles?.jornada || "todo");
 
                     // LOGIC
                     if (myShift === 'todo' || otherShift === 'todo') {
