@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.11`
+- **Versión:** `v10.3.12`
 - **Última Actualización:** 03/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.12] - 03/11/2026
+- **Módulos:** Salones
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Soporte de servicios de sala y salones por hotel
 
 ### [v10.3.11] - 03/11/2026
 - **Módulos:** Salones

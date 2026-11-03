@@ -860,7 +860,8 @@
         let jText = (jornada || "").toUpperCase();
         let jClass = isRte ? "text-indigo-700 bg-indigo-100/80" : "text-slate-600";
         
-        if (jText.includes("DESAYUNO")) { jText = "DESAY"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
+        if (jText.includes("SALA")) { jText = "SALA"; if (!isRte) jClass = "text-purple-700 bg-purple-100/50"; }
+        else if (jText.includes("DESAYUNO")) { jText = "DESAY"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
         else if (jText.includes("MERIENDA")) { jText = "MERI"; if (!isRte) jClass = "text-amber-700 bg-amber-100/50"; }
         else if (jText.includes("MAÑANA") || jText.includes("ALMUERZO")) { jText = isRte ? "ALMUERZO" : "1/2 MAÑ"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
         else if (jText.includes("TARDE") || jText.includes("CENA")) { jText = isRte ? "CENA" : "1/2 TARD"; if (!isRte) jClass = "text-orange-700 bg-orange-100/50"; }
