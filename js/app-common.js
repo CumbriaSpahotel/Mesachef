@@ -94,8 +94,8 @@
                 const getShift = (j) => {
                     const normalized = (j || "").toLowerCase().trim();
                     if (normalized === 'todo' || normalized.includes('dia') || normalized.includes('completo')) return 'todo';
-                    if (normalized.includes('mañana') || normalized.includes('almuerzo') || normalized.includes('mjm')) return 'mañana';
-                    if (normalized.includes('tarde') || normalized.includes('cena') || normalized.includes('mjt')) return 'tarde';
+                    if (normalized.includes('mañana') || normalized.includes('almuerzo') || normalized.includes('desayuno') || normalized.includes('mjm')) return 'mañana';
+                    if (normalized.includes('tarde') || normalized.includes('cena') || normalized.includes('merienda') || normalized.includes('mjt')) return 'tarde';
                     return 'todo';
                 };
 

@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.10`
-- **Última Actualización:** 28/10/2026
+- **Versión:** `v10.3.11`
+- **Última Actualización:** 03/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.11] - 03/11/2026
+- **Módulos:** Salones
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Soporte para meriendas y desayunos en cuadrante y sincronizacion bidireccional de salones con Nexus
 
 ### [v10.3.10] - 28/10/2026
 - **Módulos:** Grandes Eventos / Menú Fin de Año en PDF & WhatsApp

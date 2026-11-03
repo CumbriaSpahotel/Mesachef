@@ -715,8 +715,10 @@
                     renderedIds.add(evTodo.id);
                 } else {
                     const evMañana = group.find(r => {
-                        const j = (r._displayJornada || '').toLowerCase();
-                        return j.includes('mañana') || j.includes('almuerzo');
+                        const j = (r._displayJornada || (r.detalles && r.detalles.jornada) || '').toLowerCase();
+                        if (j.includes('tarde') || j.includes('cena') || j.includes('merienda')) return false;
+                        const h = parseInt(((r.detalles && r.detalles.hora) || (r.servicios && r.servicios[0] && r.servicios[0].hora) || '').split(':')[0], 10);
+                        return j.includes('mañana') || j.includes('almuerzo') || j.includes('desayuno') || (!isNaN(h) && h < 16);
                     });
                     if (evMañana) {
                         htmlFinal += createCardHTML(evMañana, "h-full");
@@ -725,8 +727,11 @@
                     else htmlFinal += slotMañana;
 
                     const evTarde = group.find(r => {
-                        const j = (r._displayJornada || '').toLowerCase();
-                        return j.includes('tarde') || j.includes('cena');
+                        if (evMañana && r.id === evMañana.id) return false;
+                        const j = (r._displayJornada || (r.detalles && r.detalles.jornada) || '').toLowerCase();
+                        if (j.includes('mañana') || j.includes('almuerzo') || j.includes('desayuno')) return false;
+                        const h = parseInt(((r.detalles && r.detalles.hora) || (r.servicios && r.servicios[0] && r.servicios[0].hora) || '').split(':')[0], 10);
+                        return j.includes('tarde') || j.includes('cena') || j.includes('merienda') || (!isNaN(h) && h >= 16);
                     });
                     if (evTarde) {
                         htmlFinal += createCardHTML(evTarde, "h-full");
@@ -855,7 +860,9 @@
         let jText = (jornada || "").toUpperCase();
         let jClass = isRte ? "text-indigo-700 bg-indigo-100/80" : "text-slate-600";
         
-        if (jText.includes("MAÑANA") || jText.includes("ALMUERZO")) { jText = isRte ? "ALMUERZO" : "1/2 MAÑ"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
+        if (jText.includes("DESAYUNO")) { jText = "DESAY"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
+        else if (jText.includes("MERIENDA")) { jText = "MERI"; if (!isRte) jClass = "text-amber-700 bg-amber-100/50"; }
+        else if (jText.includes("MAÑANA") || jText.includes("ALMUERZO")) { jText = isRte ? "ALMUERZO" : "1/2 MAÑ"; if (!isRte) jClass = "text-sky-700 bg-sky-100/50"; }
         else if (jText.includes("TARDE") || jText.includes("CENA")) { jText = isRte ? "CENA" : "1/2 TARD"; if (!isRte) jClass = "text-orange-700 bg-orange-100/50"; }
         else if (jText.includes("TODO")) { jText = "COMP"; if (!isRte) jClass = "text-indigo-700 bg-indigo-100/50"; }
 
@@ -2053,7 +2060,7 @@
             estado: document.getElementById("evt-estado").value,
             revisado: document.getElementById("evt-revisado").checked, // Save Status
             detalles: {
-                jornada: document.getElementById("evt-jornada").value,
+                jornada: document.getElementById("evt-jornada").value || (currentBookingId && window._resRegistry[currentBookingId]?.detalles?.jornada) || "todo",
                 montaje: document.getElementById("evt-montaje").value,
                 hora: document.getElementById("evt-hora").value,
                 pax_adultos: parseInt(document.getElementById("evt-pax-a").value) || 0,
@@ -2205,6 +2212,9 @@
                     payload.salonAnterior = previous.salon;
                 }
                 // Update existing
+                if (isNexusLinked(existing)) {
+                    payload.salonOverride = payload.salon;
+                }
                 payload.updated_at = new Date().toISOString();
                 await db.collection("reservas_salones").doc(currentBookingId).set(payload, { merge: true });
             } else {
