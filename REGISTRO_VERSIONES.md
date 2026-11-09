@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.14`
+- **Versión:** `v10.3.15`
 - **Última Actualización:** 09/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.15] - 09/11/2026
+- **Módulos:** Grandes Eventos
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Insignias visuales de estado y punto verde de pagado en tabla de participantes de Grandes Eventos
 
 ### [v10.3.14] - 09/11/2026
 - **Módulos:** Grandes Eventos

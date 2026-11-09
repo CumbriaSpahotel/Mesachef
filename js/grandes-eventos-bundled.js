@@ -1269,13 +1269,16 @@
             // If included, add total to paid automatically
             const displayPaid = isIncluded ? (paid + total) : paid;
             const pending = Math.max(0, total - displayPaid);
+            const isFullyPaid = (total > 0 && pending === 0) || (isIncluded && total > 0);
 
-            // Display logic for pending column
+            // Display logic for pending column with green badges
             let pendingDisplay;
             if (isIncluded) {
-                pendingDisplay = '<span class="text-xs font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">Incluido</span>';
+                pendingDisplay = '<span class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-700 bg-blue-100 border border-blue-200 px-2 py-0.5 rounded-full" title="Servicio incluido en el paquete">✓ Incluido</span>';
             } else if (pending > 0) {
-                pendingDisplay = `<span class="font-mono text-xs text-orange-600 font-semibold">${formatCurrency(pending)}</span>`;
+                pendingDisplay = `<span class="inline-flex items-center gap-1 font-mono text-[11px] font-bold text-amber-800 bg-amber-50 border border-amber-300 px-2 py-0.5 rounded-full"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>${formatCurrency(pending)}</span>`;
+            } else if (total > 0 && pending === 0) {
+                pendingDisplay = '<span class="inline-flex items-center gap-1.5 text-[11px] font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded-full shadow-sm" title="Reserva 100% pagada"><span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>🟢 Pagado</span>';
             } else {
                 pendingDisplay = '<span class="font-mono text-xs text-slate-400">-</span>';
             }
@@ -1287,6 +1290,12 @@
             const isGuadiana = (state.hotelInfo.id || getActiveHotel()) === 'Guadiana';
             let chargeBadges = '';
             if (isGuadiana && !isAnulado) {
+                if (isFullyPaid) {
+                    chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-100 text-emerald-800 border border-emerald-200">🟢 Pagado</span>';
+                }
+                if (p.paygoldStatus === 'garantizado') {
+                    chargeBadges += '<span class="inline-flex items-center gap-1 px-1.5 py-0.5 text-[9px] font-bold rounded bg-emerald-50 text-emerald-700 border border-emerald-200" title="Garantía bancaria confirmada">🛡️ PayGold</span>';
+                }
                 if (p.chargeDate && pending > 0) {
                     const todayStr = new Date().toISOString().split('T')[0];
                     if (p.chargeDate < todayStr) {
@@ -1298,9 +1307,13 @@
                     }
                 }
                 if (p.cardLast4) {
-                    chargeBadges += '<span class="inline-block mt-0.5 ml-1 px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700 border border-slate-200">💳 •••• ' + p.cardLast4 + '</span>';
+                    chargeBadges += '<span class="inline-block mt-0.5 px-1.5 py-0.5 text-[9px] font-mono rounded bg-slate-100 text-slate-700 border border-slate-200">💳 •••• ' + p.cardLast4 + '</span>';
                 }
             }
+
+            const paidCell = isFullyPaid
+                ? `<span class="font-mono text-xs font-bold text-emerald-600">✓ ${formatCurrency(displayPaid)}</span>`
+                : `<span class="font-mono text-xs text-green-700">${formatCurrency(displayPaid)}</span>`;
 
             tr.innerHTML = `
                 <td class="font-mono text-xs">${p.mesa || '-'}</td>
@@ -1311,7 +1324,7 @@
                 <td class="text-xs text-slate-500">${formatPhoneES(p.telefono) || '-'}</td>
                 <td><span class="font-bold">${p.adultos}</span> / ${p.ninos}</td>
                 <td class="font-mono text-xs">${totalDisplay}</td>
-                <td class="font-mono text-xs text-green-700">${formatCurrency(displayPaid)}</td>
+                <td>${paidCell}</td>
                 <td>${pendingDisplay}</td>
                 <td><button class="btn-action edit-p" data-id="${p.id}">Editar</button></td>
             `;
