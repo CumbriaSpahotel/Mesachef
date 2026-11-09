@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.4.1`
+- **Versión:** `v10.4.2`
 - **Última Actualización:** 09/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.4.2] - 09/11/2026
+- **Módulos:** Restaurante / Salones
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Simplificacion visual de PayGold en modales de Restaurante y Salones dejando unicamente la barra de acciones rapida
 
 ### [v10.4.1] - 09/11/2026
 - **Módulos:** Restaurante / Salones / PayGold Service

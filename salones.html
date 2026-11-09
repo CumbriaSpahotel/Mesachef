@@ -141,7 +141,7 @@
                         <div class="flex flex-col leading-none">
                             <h1 class="text-slate-800 font-bold text-lg tracking-tight">MesaChef</h1>
                             <span
-                                class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.4.1</span>
+                                class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.4.2</span>
                         </div>
                     </div>
 
@@ -487,100 +487,35 @@
                         <!-- NOTES & CHECK -->
                         
                     <!-- SECCIÓN GARANTÍA Y PAGO PAYGOLD EN SALONES (MULTIHOTEL) -->
-                    <div id="sectionSalonesPaygold" class="mt-3 p-3 bg-emerald-50/70 border border-emerald-300 rounded-lg">
-                        <div class="flex justify-between items-center mb-2 pb-1.5 border-b border-emerald-200">
-                            <div class="flex items-center gap-2">
-                                <span class="text-sm">🏦</span>
-                                <strong id="lblHotelPaygoldSalones" class="text-xs text-emerald-900 font-bold">Garantía y Señal PayGold (Eurocaja Rural)</strong>
-                                <span id="chipFucTerminalSalones" class="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-extrabold border border-emerald-300">168355840-001</span>
-                            </div>
-                            <span class="text-[10px] text-emerald-700 font-bold">🛡️ PCI-DSS Seguro</span>
+                    <!-- BARRA LIMPIA DE ACCIONES PAYGOLD / SEÑAL -->
+                    <div id="sectionSalonesPaygold" class="flex justify-between items-center py-2 px-1 border-t border-b border-emerald-300/80 my-2 bg-emerald-50/30 rounded-lg">
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="btnGenerarPaygoldRedsysSalones" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 shadow-sm transition">
+                                <span>⚡</span> Generar Enlace Redsys
+                            </button>
+                            <a id="linkOpenTpvSalones" href="https://canales.redsys.es/portal" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-emerald-800 hover:underline flex items-center gap-1 hidden">
+                                <span>🌐</span> Abrir TPV Eurocaja Rural
+                            </a>
+                            <span id="badgePaygoldStatusSalones" class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200 hidden"></span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button type="button" id="btnPayFullPendingSalones" class="bg-white text-emerald-700 border border-emerald-400 hover:bg-emerald-50 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 shadow-xs transition" title="Marcar señal como cobrada">
+                                <span>⚡</span> Señal Cobrada
+                            </button>
+                            <button type="button" id="btnSendWhatsAppPaygoldSalones" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 shadow-sm transition">
+                                <span>📱</span> WhatsApp Señal PayGold
+                            </button>
                         </div>
 
-                        <!-- Fila 1: Cód. Pedido, Señal Acordada, Estado -->
-                        <div class="grid grid-cols-12 gap-3 mb-2">
-                            <div class="col-span-4">
-                                <label class="block text-[10px] font-bold text-emerald-800 uppercase mb-0.5 flex justify-between">
-                                    <span>Cód. Pedido</span>
-                                    <div class="flex gap-1.5">
-                                        <button type="button" id="btnRegenSalonesPaygoldRef" class="text-emerald-700 hover:underline text-[10px] font-bold" title="Nuevo código">🔄</button>
-                                        <button type="button" id="btnCopySalonesPaygoldRef" class="text-blue-600 hover:underline text-[10px] font-bold">📋 Copiar</button>
-                                    </div>
-                                </label>
-                                <input type="text" id="evt-paygold-ref" class="w-full font-mono font-bold text-xs border border-emerald-300 rounded px-2 py-1 bg-white h-8" placeholder="EVT-XXXXX">
-                            </div>
-                            <div class="col-span-4">
-                                <label class="block text-[10px] font-bold text-emerald-800 uppercase mb-0.5 flex justify-between">
-                                    <span>Señal Acordada (€)</span>
-                                    <button type="button" id="btnCopySalonesPaygoldAmount" class="text-blue-600 hover:underline text-[10px] font-bold">💰 Copiar</button>
-                                </label>
-                                <input type="number" id="evt-paygold-amount" step="0.01" class="w-full font-mono font-bold text-xs border border-emerald-300 rounded px-2 py-1 bg-white h-8 text-right" placeholder="0.00">
-                            </div>
-                            <div class="col-span-4">
-                                <label class="block text-[10px] font-bold text-emerald-800 uppercase mb-0.5">Estado Garantía / Señal</label>
-                                <select id="evt-paygold-status" class="w-full text-xs font-bold border border-emerald-300 rounded px-2 py-1 bg-white h-8">
-                                    <option value="pendiente">⏳ Pendiente</option>
-                                    <option value="enlace_enviado">📤 Enlace Enviado</option>
-                                    <option value="garantizado">✅ Señal Cobrada / Garantizado</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Fila 2: Tarjeta Segura (4 dígitos de referencia) -->
-                        <div class="bg-white/90 p-2 rounded border border-emerald-200 mb-2">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="text-[10px] font-bold text-slate-700">💳 Referencia de Tarjeta Bancaria</span>
-                                <span class="text-[10px] text-slate-400">Sólo últimos 4 dígitos</span>
-                            </div>
-                            <div class="grid grid-cols-12 gap-2">
-                                <div class="col-span-6 flex items-center gap-1">
-                                    <span class="font-mono text-xs text-slate-400 select-none">•••• •••• ••••</span>
-                                    <input type="text" id="evt-card-last4" maxlength="4" class="w-20 font-mono font-bold text-xs border border-slate-300 rounded px-2 py-1 text-center bg-white h-7" placeholder="0004">
-                                </div>
-                                <div class="col-span-3">
-                                    <input type="text" id="evt-card-expiry" maxlength="5" class="w-full font-mono text-xs border border-slate-300 rounded px-2 py-1 text-center bg-white h-7" placeholder="MM/AA">
-                                </div>
-                                <div class="col-span-3">
-                                    <select id="evt-card-brand" class="w-full text-xs border border-slate-300 rounded px-2 py-1 bg-white h-7">
-                                        <option value="Visa">Visa</option>
-                                        <option value="Mastercard">Mastercard</option>
-                                        <option value="Amex">Amex</option>
-                                        <option value="Otra">Otra</option>
-                                    </select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Fila 3: Enlace generado -->
-                        <div class="mb-2">
-                            <label class="block text-[10px] font-bold text-emerald-800 uppercase mb-0.5 flex justify-between">
-                                <span id="lblPaygoldLinkDescSalones">Enlace de Pago PayGold (Redsys)</span>
-                                <span id="lblPaygoldReqMsgSalones" class="text-emerald-700 font-bold text-[10px]">⚡ 1 Clic para generar o pegar</span>
-                            </label>
-                            <input type="url" id="evt-paygold-link" class="w-full font-mono text-xs border border-emerald-300 rounded px-2 py-1 bg-white h-8" placeholder="https://sis.redsys.es/sis/p2f?t=...">
-                        </div>
-
-                        <!-- Fila 4: Botones de Acción -->
-                        <div class="flex justify-between items-center pt-2 border-t border-emerald-200">
-                            <div class="flex items-center gap-2">
-                                <button type="button" id="btnGenerarPaygoldRedsysSalones" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-3 py-1.5 rounded text-xs flex items-center gap-1 shadow transition">
-                                    <span>⚡</span> Generar Enlace Redsys
-                                </button>
-                                <a id="linkOpenTpvSalones" href="https://canales.redsys.es/portal" target="_blank" rel="noopener noreferrer" class="text-xs font-bold text-emerald-800 hover:underline flex items-center gap-1 hidden">
-                                    <span>🌐 Abrir TPV Eurocaja</span>
-                                </a>
-                            </div>
-                            <div class="flex gap-2">
-                                <button type="button" id="btnPayFullPendingSalones" class="bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200 font-bold px-3 py-1 rounded text-xs flex items-center gap-1">
-                                    <span>⚡</span> Señal Cobrada
-                                </button>
-                                <button type="button" id="btnSendWhatsAppPaygoldSalones" class="bg-green-600 hover:bg-green-700 text-white font-bold px-3 py-1 rounded text-xs flex items-center gap-1 shadow">
-                                    <span>📱</span> WhatsApp Señal PayGold
-                                </button>
-                            </div>
-                        </div>
+                        <!-- Campos ocultos de persistencia -->
+                        <input type="hidden" id="evt-paygold-ref">
+                        <input type="hidden" id="evt-paygold-amount">
+                        <input type="hidden" id="evt-paygold-status" value="pendiente">
+                        <input type="hidden" id="evt-paygold-link">
+                        <input type="hidden" id="evt-card-last4">
+                        <input type="hidden" id="evt-card-expiry">
+                        <input type="hidden" id="evt-card-brand" value="Visa">
                     </div>
-
 
 <div class="grid grid-cols-12 gap-3 mt-2">
                             <div class="col-span-12" id="evt-revisado-container">
