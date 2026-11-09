@@ -1,6 +1,7 @@
 // functions/index.js
 // Cloud Function (2nd Gen) para recibir notificaciones online de Eurocaja Rural / Redsys (PayGold)
-// Proyecto MesaChef - Sercotel Guadiana
+// Ecosistema MesaChef: Grandes Eventos (GE-), Restaurante (RES-), Salones (EVT-), Grupos (GRP-) y Spa (SPA-)
+// Sercotel Guadiana & Cumbria Spa&Hotel
 
 const { onRequest } = require('firebase-functions/v2/https');
 const { setGlobalOptions } = require('firebase-functions/v2');
@@ -26,16 +27,50 @@ setGlobalOptions({
 const REDSYS_SECRET_KEY = process.env.REDSYS_SECRET_KEY || null;
 
 /**
- * Webhook HTTP para notificaciones online de Redsys / PayGold Eurocaja
- * URL esperada: https://europe-west1-mesa-chef-prod.cloudfunctions.net/redsysWebhook
+ * Función auxiliar para buscar documentos en colecciones Firestore
+ * Admite búsqueda por paygoldRef, referencia o por ID directo
+ */
+async function findDocInCollection(collectionName, candidates) {
+  const colRef = db.collection(collectionName);
+  for (const c of candidates) {
+    if (!c) continue;
+    // 1. Por paygoldRef
+    let snap = await colRef.where('paygoldRef', '==', c).limit(1).get();
+    if (!snap.empty) return snap.docs[0];
+
+    // 2. Por referencia
+    snap = await colRef.where('referencia', '==', c).limit(1).get();
+    if (!snap.empty) return snap.docs[0];
+
+    // 3. Por referenciaPaygold (usado en spa/grupos)
+    snap = await colRef.where('referenciaPaygold', '==', c).limit(1).get();
+    if (!snap.empty) return snap.docs[0];
+  }
+
+  // 4. Intento por ID directo de documento
+  for (const c of candidates) {
+    if (!c || c.length < 5) continue;
+    try {
+      const doc = await colRef.doc(c).get();
+      if (doc.exists) return doc;
+    } catch (_) {}
+  }
+  return null;
+}
+
+/**
+ * Webhook HTTP central para notificaciones online de Redsys / PayGold Eurocaja
+ * URL oficial: https://europe-west1-mesa-chef-prod.cloudfunctions.net/redsysWebhook
  */
 exports.redsysWebhook = onRequest({ cors: true, invoker: 'public' }, async (req, res) => {
   // Manejo de peticiones GET para comprobación de salud / estado
   if (req.method === 'GET') {
     return res.status(200).json({
       status: 'active',
-      service: 'MesaChef Redsys PayGold Webhook (2nd Gen)',
+      service: 'MesaChef Matrix Multi-Module PayGold Webhook (2nd Gen)',
+      version: 'v10.4.0',
       timestamp: new Date().toISOString(),
+      modules: ['Grandes Eventos (GE-)', 'Restaurante (RES-)', 'Salones/Eventos (EVT-)', 'Grupos (GRP-)', 'Spa (SPA-)'],
       fucExpected: '168355840',
       terminalExpected: '001'
     });
@@ -82,41 +117,52 @@ exports.redsysWebhook = onRequest({ cors: true, invoker: 'public' }, async (req,
     // 3. Evaluar respuesta del banco (0000 - 0099 = Aprobado)
     const result = parseRedsysResponse(responseCode);
 
-    // 4. Buscar la reserva / participante en Firestore (participantes_eventos)
-    const participantesRef = db.collection('participantes_eventos');
-    let matchedDoc = null;
-
-    // Estrategia de búsqueda flexible: coincidencia exacta, sufijos de versión (-2, -3), con prefijo GE- o sin prefijo
+    // Preparar lista de candidatos flexibles (con o sin prefijo, base sin versión, etc.)
     const baseOrder = order.replace(/-\d+$/, '');
+    const cleanDigits = order.replace(/\D/g, '');
     const candidates = [
       order,
-      order.startsWith('GE-') ? order.replace('GE-', '') : `GE-${order}`,
+      order.replace(/^[A-Z]+-/, ''),
       baseOrder,
-      baseOrder.startsWith('GE-') ? baseOrder.replace('GE-', '') : `GE-${baseOrder}`,
-      order.replace(/\D/g, '') // Solo dígitos si aplica
+      baseOrder.replace(/^[A-Z]+-/, ''),
+      cleanDigits
     ].filter(Boolean);
 
-    for (const refCandidate of candidates) {
-      const snap = await participantesRef.where('paygoldRef', '==', refCandidate).limit(1).get();
-      if (!snap.empty) {
-        matchedDoc = snap.docs[0];
-        break;
-      }
+    let matchedDoc = null;
+    let matchedModule = null; // 'restaurante' | 'salones' | 'grandes-eventos' | 'spa'
+
+    // 4. Estrategia de búsqueda inteligente por prefijo
+    if (order.startsWith('RES-') || order.startsWith('RST-')) {
+      matchedDoc = await findDocInCollection('reservas_restaurante', candidates);
+      if (matchedDoc) matchedModule = 'restaurante';
+    } else if (order.startsWith('EVT-') || order.startsWith('GRP-')) {
+      matchedDoc = await findDocInCollection('reservas_salones', candidates);
+      if (matchedDoc) matchedModule = 'salones';
+    } else if (order.startsWith('SPA-')) {
+      matchedDoc = await findDocInCollection('citas_spa', candidates);
+      if (matchedDoc) matchedModule = 'spa';
+    } else if (order.startsWith('GE-')) {
+      matchedDoc = await findDocInCollection('participantes_eventos', candidates);
+      if (matchedDoc) matchedModule = 'grandes-eventos';
     }
 
-    // Si aún no se encuentra, buscar por el campo 'referencia' o por ID de documento
+    // Respaldo transversal si aún no se encuentra por prefijo
     if (!matchedDoc) {
-      for (const refCandidate of candidates) {
-        const snap = await participantesRef.where('referencia', '==', refCandidate).limit(1).get();
-        if (!snap.empty) {
-          matchedDoc = snap.docs[0];
-          break;
-        }
-      }
+      matchedDoc = await findDocInCollection('participantes_eventos', candidates);
+      if (matchedDoc) matchedModule = 'grandes-eventos';
+    }
+    if (!matchedDoc) {
+      matchedDoc = await findDocInCollection('reservas_restaurante', candidates);
+      if (matchedDoc) matchedModule = 'restaurante';
+    }
+    if (!matchedDoc) {
+      matchedDoc = await findDocInCollection('reservas_salones', candidates);
+      if (matchedDoc) matchedModule = 'salones';
     }
 
-    // 5. Registrar siempre en la colección de auditoría
+    // 5. Registrar siempre en la colección central de auditoría
     await db.collection('auditoria_paygold').add({
+      modulo: matchedModule || 'desconocido',
       order,
       amount: amountEuros,
       responseCode,
@@ -125,27 +171,24 @@ exports.redsysWebhook = onRequest({ cors: true, invoker: 'public' }, async (req,
       authCode,
       merchantCode,
       terminal,
-      participantId: matchedDoc ? matchedDoc.id : null,
-      eventoId: matchedDoc ? (matchedDoc.data().eventoId || null) : null,
-      titular: matchedDoc ? (matchedDoc.data().titular || null) : null,
+      docId: matchedDoc ? matchedDoc.id : null,
       rawParams: params,
       createdAt: admin.firestore.FieldValue.serverTimestamp()
     });
 
-    // 6. Actualizar el participante si fue encontrado
+    // 6. Actualizar la reserva según el módulo si se encontró coincidencia
     if (matchedDoc) {
-      const pData = matchedDoc.data();
-      const cardLast4 = cardRaw ? cardRaw.slice(-4) : (pData.cardLast4 || '');
-      const cardBrand = parseCardBrand(brandCode) || (pData.cardBrand || 'Visa');
-      const cardExpiry = formatExpiryDate(expiryRaw) || (pData.cardExpiry || '');
+      const docData = matchedDoc.data();
+      const cardLast4 = cardRaw ? cardRaw.slice(-4) : (docData.cardLast4 || '');
+      const cardBrand = parseCardBrand(brandCode) || (docData.cardBrand || 'Visa');
+      const cardExpiry = formatExpiryDate(expiryRaw) || (docData.cardExpiry || '');
+      const todayIso = new Date().toISOString().split('T')[0];
 
       if (result.success) {
-        // Pago o garantía aprobada
-        const currentPagos = Array.isArray(pData.pagos) ? [...pData.pagos] : [];
+        const currentPagos = Array.isArray(docData.pagos) ? [...docData.pagos] : [];
         const alreadyRecorded = currentPagos.some(p => p.authCode === authCode && p.order === order);
 
         if (!alreadyRecorded) {
-          const todayIso = new Date().toISOString().split('T')[0];
           currentPagos.push({
             date: todayIso,
             amount: amountEuros,
@@ -156,7 +199,7 @@ exports.redsysWebhook = onRequest({ cors: true, invoker: 'public' }, async (req,
           });
         }
 
-        await matchedDoc.ref.update({
+        const updateData = {
           paygoldStatus: 'garantizado',
           pagos: currentPagos,
           cardLast4: cardLast4,
@@ -171,11 +214,49 @@ exports.redsysWebhook = onRequest({ cors: true, invoker: 'public' }, async (req,
             updatedAt: new Date().toISOString()
           },
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
-        });
+        };
 
-        console.log(`[PayGold Webhook] Participante ${matchedDoc.id} (${pData.titular}) actualizado con éxito a GARANTIZADO`);
+        // Reglas específicas por módulo
+        if (matchedModule === 'restaurante') {
+          updateData.estado = 'confirmada';
+          updateData.fianzaPagada = (docData.fianzaPagada || 0) + amountEuros;
+          await matchedDoc.ref.update(updateData);
+
+          // Si está vinculado con salones, sincronizar también
+          if (docData.salonBookingId) {
+            try {
+              await db.collection('reservas_salones').doc(docData.salonBookingId).set({
+                estado: 'confirmada',
+                paygoldStatus: 'garantizado',
+                updated_at: new Date().toISOString()
+              }, { merge: true });
+            } catch (eSync) {
+              console.warn('[PayGold Webhook] Error sincronizando con reservas_salones:', eSync);
+            }
+          }
+          console.log(`[PayGold Webhook] Reserva de Restaurante ${matchedDoc.id} (${docData.nombre}) actualizada con éxito a CONFIRMADA / GARANTIZADA`);
+
+        } else if (matchedModule === 'salones') {
+          updateData.estado = 'confirmada';
+          updateData.senalPagada = (docData.senalPagada || 0) + amountEuros;
+          updateData.updated_at = new Date().toISOString();
+          await matchedDoc.ref.update(updateData);
+          console.log(`[PayGold Webhook] Evento de Salones ${matchedDoc.id} (${docData.cliente}) actualizado con éxito a CONFIRMADO / GARANTIZADO`);
+
+        } else if (matchedModule === 'spa') {
+          updateData.estadoPago = 'pagado';
+          updateData.importePagado = amountEuros;
+          await matchedDoc.ref.update(updateData);
+          console.log(`[PayGold Webhook] Cita de Gest-Spa ${matchedDoc.id} actualizada con éxito a PAGADA`);
+
+        } else {
+          // Grandes Eventos
+          await matchedDoc.ref.update(updateData);
+          console.log(`[PayGold Webhook] Participante de Grandes Eventos ${matchedDoc.id} (${docData.titular}) actualizado con éxito a GARANTIZADO`);
+        }
+
       } else {
-        // Pago denegado o cancelado por el cliente
+        // Pago denegado o cancelado
         await matchedDoc.ref.update({
           paygoldStatus: 'denegado',
           paygoldLastError: {
@@ -186,10 +267,10 @@ exports.redsysWebhook = onRequest({ cors: true, invoker: 'public' }, async (req,
           },
           updatedAt: admin.firestore.FieldValue.serverTimestamp()
         });
-        console.warn(`[PayGold Webhook] Participante ${matchedDoc.id} marcado como DENEGADO: ${result.description}`);
+        console.warn(`[PayGold Webhook] Pedido ${order} marcado como DENEGADO en módulo ${matchedModule}: ${result.description}`);
       }
     } else {
-      console.warn(`[PayGold Webhook] No se encontró participante en Firestore para el pedido: ${order}`);
+      console.warn(`[PayGold Webhook] No se encontró reserva/participante en Firestore para el pedido: ${order}`);
     }
 
     // Redsys requiere respuesta HTTP 200 con "OK"

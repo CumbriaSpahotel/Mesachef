@@ -868,11 +868,16 @@
         else if (jText.includes("TARDE") || jText.includes("CENA")) { jText = isRte ? "CENA" : "1/2 TARD"; if (!isRte) jClass = "text-orange-700 bg-orange-100/50"; }
         else if (jText.includes("TODO")) { jText = "COMP"; if (!isRte) jClass = "text-indigo-700 bg-indigo-100/50"; }
 
-        // [INCLUIDO/PAGO] Badge
+        // [INCLUIDO/PAGO/PAYGOLD] Badge
         const isIncluido = res.detalles?.incluido === true;
-        const pagoBadge = isIncluido
-            ? `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-300 leading-none" title="Incluido en el paquete">✓ INC</span>`
-            : `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300 leading-none" title="Servicio de pago">💰 PAGO</span>`;
+        let pagoBadge = '';
+        if (res.paygoldStatus === 'garantizado' || (res.senalPagada && res.senalPagada > 0) || res.cardLast4) {
+            pagoBadge = `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-300 leading-none" title="Señal Pagada / Tarjeta: ${res.cardLast4 ? '•••• ' + res.cardLast4 : 'OK'} · Importe: ${res.senalPagada || res.paygoldAmount || ''}€">💳 ${res.cardLast4 ? '•••• ' + res.cardLast4 : 'PAGADO'}</span>`;
+        } else if (isIncluido) {
+            pagoBadge = `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-blue-100 text-blue-700 border border-blue-300 leading-none" title="Incluido en el paquete">✓ INC</span>`;
+        } else {
+            pagoBadge = `<span class="inline-flex items-center gap-0.5 text-[9px] font-bold uppercase tracking-wide px-1 py-0.5 rounded bg-amber-100 text-amber-700 border border-amber-300 leading-none" title="Servicio de pago">💰 PAGO</span>`;
+        }
 
         const timeStr = res.detalles?.hora ? `<span class="opacity-75">${res.detalles.hora}</span>` : '';
         const paxTotal = (res.detalles?.pax_adultos || 0) + (res.detalles?.pax_ninos || 0);
@@ -1332,6 +1337,42 @@
 
         // Default Jornada
         document.getElementById("evt-jornada").value = defaultJornada;
+
+        // [PAYGOLD] Set Hotel Credentials Display
+        const isGuadianaSalones = currentHotel === "Guadiana";
+        const lblHotelSalones = document.getElementById("lblHotelPaygoldSalones");
+        const chipFucSalones = document.getElementById("chipFucTerminalSalones");
+        const linkTpvSalones = document.getElementById("linkOpenTpvSalones");
+        if (lblHotelSalones) lblHotelSalones.innerText = isGuadianaSalones ? "Garantía y Señal PayGold (Eurocaja Rural)" : "Garantía y Señal PayGold (Cumbria Spa&Hotel)";
+        if (chipFucSalones) chipFucSalones.innerText = isGuadianaSalones ? "168355840-001" : "TPV Cumbria";
+        if (linkTpvSalones) linkTpvSalones.href = "https://canales.redsys.es/portal";
+
+        // PayGold field population
+        const elSalonesPayRef = document.getElementById("evt-paygold-ref");
+        const elSalonesPayAmount = document.getElementById("evt-paygold-amount");
+        const elSalonesPayStatus = document.getElementById("evt-paygold-status");
+        const elSalonesPayLink = document.getElementById("evt-paygold-link");
+        const elSalonesCardLast4 = document.getElementById("evt-card-last4");
+        const elSalonesCardExpiry = document.getElementById("evt-card-expiry");
+        const elSalonesCardBrand = document.getElementById("evt-card-brand");
+
+        if (existing) {
+            if (elSalonesPayRef) elSalonesPayRef.value = existing.paygoldRef || existing.reservaId || ("EVT-" + Date.now().toString().slice(-6));
+            if (elSalonesPayAmount) elSalonesPayAmount.value = (existing.paygoldAmount !== undefined && existing.paygoldAmount !== null && existing.paygoldAmount !== '') ? existing.paygoldAmount : (existing.senalPagada || "");
+            if (elSalonesPayStatus) elSalonesPayStatus.value = existing.paygoldStatus || "pendiente";
+            if (elSalonesPayLink) elSalonesPayLink.value = existing.paygoldLink || "";
+            if (elSalonesCardLast4) elSalonesCardLast4.value = existing.cardLast4 || "";
+            if (elSalonesCardExpiry) elSalonesCardExpiry.value = existing.cardExpiry || "";
+            if (elSalonesCardBrand) elSalonesCardBrand.value = existing.cardBrand || "Visa";
+        } else {
+            if (elSalonesPayRef) elSalonesPayRef.value = "EVT-" + Date.now().toString().slice(-6);
+            if (elSalonesPayAmount) elSalonesPayAmount.value = "";
+            if (elSalonesPayStatus) elSalonesPayStatus.value = "pendiente";
+            if (elSalonesPayLink) elSalonesPayLink.value = "";
+            if (elSalonesCardLast4) elSalonesCardLast4.value = "";
+            if (elSalonesCardExpiry) elSalonesCardExpiry.value = "";
+            if (elSalonesCardBrand) elSalonesCardBrand.value = "Visa";
+        }
 
         if (!existing) {
             if (salonName) {
@@ -1834,6 +1875,7 @@
 
     window.toggleIncluido = function () {
         const isIncluido = document.getElementById("evt-incluido") ? document.getElementById("evt-incluido").checked : false;
+        document.getElementById("sectionSalonesPaygold")?.classList.toggle("hidden", isIncluido);
         const totalContainer = document.getElementById("evt-total") ? document.getElementById("evt-total").parentElement : null;
 
         if (isIncluido) {
@@ -2081,6 +2123,13 @@
                 cliente: document.getElementById("evt-nota-cliente").value
             },
             presupuestoId: window.currentEventBudgetID || (currentBookingId ? (window._resRegistry[currentBookingId]?.presupuestoId || null) : null) || null,
+            paygoldRef: document.getElementById("evt-paygold-ref") ? document.getElementById("evt-paygold-ref").value.trim() : "",
+            paygoldAmount: document.getElementById("evt-paygold-amount") ? parseFloat(document.getElementById("evt-paygold-amount").value) || 0 : 0,
+            paygoldStatus: document.getElementById("evt-paygold-status") ? document.getElementById("evt-paygold-status").value : "pendiente",
+            paygoldLink: document.getElementById("evt-paygold-link") ? document.getElementById("evt-paygold-link").value.trim() : "",
+            cardLast4: document.getElementById("evt-card-last4") ? document.getElementById("evt-card-last4").value.trim() : "",
+            cardExpiry: document.getElementById("evt-card-expiry") ? document.getElementById("evt-card-expiry").value.trim() : "",
+            cardBrand: document.getElementById("evt-card-brand") ? document.getElementById("evt-card-brand").value : "Visa",
             servicios: []
         };
 
@@ -2660,3 +2709,80 @@
     });
 })();
 
+
+    // PAYGOLD LISTENERS (SALONES MULTIHOTEL)
+    document.addEventListener("DOMContentLoaded", function () {
+        document.getElementById("btnCopySalonesPaygoldRef")?.addEventListener("click", function () {
+            const el = document.getElementById("evt-paygold-ref");
+            if (el && el.value) {
+                navigator.clipboard.writeText(el.value).then(() => {
+                    const btn = document.getElementById("btnCopySalonesPaygoldRef");
+                    if (btn) { const t = btn.innerText; btn.innerText = "✓ Copiado"; setTimeout(() => btn.innerText = t, 1500); }
+                });
+            }
+        });
+
+        document.getElementById("btnCopySalonesPaygoldAmount")?.addEventListener("click", function () {
+            const el = document.getElementById("evt-paygold-amount");
+            if (el && el.value) {
+                navigator.clipboard.writeText(el.value).then(() => {
+                    const btn = document.getElementById("btnCopySalonesPaygoldAmount");
+                    if (btn) { const t = btn.innerText; btn.innerText = "✓ Copiado"; setTimeout(() => btn.innerText = t, 1500); }
+                });
+            }
+        });
+
+        document.getElementById("btnRegenSalonesPaygoldRef")?.addEventListener("click", function () {
+            const el = document.getElementById("evt-paygold-ref");
+            if (el) el.value = "EVT-" + Date.now().toString().slice(-6);
+        });
+
+        document.getElementById("btnPayFullPendingSalones")?.addEventListener("click", function () {
+            const st = document.getElementById("evt-paygold-status");
+            const est = document.getElementById("evt-estado");
+            if (st) st.value = "garantizado";
+            if (est) est.value = "confirmada";
+            alert("✅ Señal / Garantía marcada como COBRADA.\nEl evento pasará a Confirmado al pulsar GUARDAR.");
+        });
+
+        document.getElementById("btnSendWhatsAppPaygoldSalones")?.addEventListener("click", function () {
+            const phoneInput = document.getElementById("evt-telefono");
+            const linkInput = document.getElementById("evt-paygold-link");
+            const refInput = document.getElementById("evt-paygold-ref");
+            const amountInput = document.getElementById("evt-paygold-amount");
+            const nameInput = document.getElementById("evt-nombre");
+            const fechaInput = document.getElementById("evt-fecha");
+            const salonInput = document.getElementById("evt-salon");
+            const jornadaInput = document.getElementById("evt-jornada");
+
+            const phone = phoneInput ? phoneInput.value.replace(/\D/g, "") : "";
+            if (!phone || phone.length < 9) {
+                alert("⚠️ Por favor introduce un número de teléfono válido para enviar el WhatsApp.");
+                return;
+            }
+
+            const link = linkInput ? linkInput.value.trim() : "";
+            if (!link || !link.startsWith("http")) {
+                alert("⚠️ Es obligatorio pegar el enlace de pago PayGold generado en el TPV de Eurocaja antes de enviar el WhatsApp.");
+                linkInput?.focus();
+                return;
+            }
+
+            const hotelKey = getActiveHotel();
+            const hotelName = hotelKey === "Guadiana" ? "Sercotel Guadiana" : "Cumbria Spa&Hotel";
+            const cliente = nameInput ? nameInput.value.trim() : "Cliente";
+            const ref = refInput ? refInput.value.trim() : "";
+            const amount = amountInput ? amountInput.value.trim() : "0.00";
+            const fecha = fechaInput ? utils.formatDateES(new Date(fechaInput.value)) : "";
+            const salon = salonInput ? salonInput.value : "Salón";
+            const jornada = jornadaInput ? jornadaInput.value : "todo";
+
+            const msg = `Hola ${cliente}, te contactamos desde ${hotelName}. Para confirmar la reserva de ${salon} del ${fecha} (${jornada}), te facilitamos el enlace oficial de Eurocaja Rural para el abono de la señal acordada (${amount}€):\n\n👉 Enlace de pago: ${link}\nCód. Pedido: ${ref}\n\n¡Muchas gracias!`;
+
+            const st = document.getElementById("evt-paygold-status");
+            if (st && st.value === "pendiente") st.value = "enlace_enviado";
+
+            const url = `https://api.whatsapp.com/send?phone=34${phone}&text=${encodeURIComponent(msg)}`;
+            window.open(url, "_blank");
+        });
+    });

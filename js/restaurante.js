@@ -318,6 +318,83 @@
     document.getElementById("btnPrev").addEventListener("click", () => changeWeek(-1));
     document.getElementById("btnNext").addEventListener("click", () => changeWeek(1));
 
+    // PAYGOLD LISTENERS (MULTIHOTEL)
+    document.getElementById("btnCopyRtePaygoldRef")?.addEventListener("click", () => {
+      const el = document.getElementById("campoPaygoldRef");
+      if (el && el.value) {
+        navigator.clipboard.writeText(el.value).then(() => {
+          const btn = document.getElementById("btnCopyRtePaygoldRef");
+          if (btn) { const t = btn.innerText; btn.innerText = "✓ Copiado"; setTimeout(() => btn.innerText = t, 1500); }
+        });
+      }
+    });
+
+    document.getElementById("btnCopyRtePaygoldAmount")?.addEventListener("click", () => {
+      const el = document.getElementById("campoPaygoldAmount");
+      if (el && el.value) {
+        navigator.clipboard.writeText(el.value).then(() => {
+          const btn = document.getElementById("btnCopyRtePaygoldAmount");
+          if (btn) { const t = btn.innerText; btn.innerText = "✓ Copiado"; setTimeout(() => btn.innerText = t, 1500); }
+        });
+      }
+    });
+
+    document.getElementById("btnRegenRtePaygoldRef")?.addEventListener("click", () => {
+      const el = document.getElementById("campoPaygoldRef");
+      if (el) {
+        el.value = "RES-" + Date.now().toString().slice(-6);
+      }
+    });
+
+    document.getElementById("btnPayFullPendingRte")?.addEventListener("click", () => {
+      const st = document.getElementById("campoPaygoldStatus");
+      const est = document.getElementById("campoEstado");
+      if (st) st.value = "garantizado";
+      if (est) est.value = "confirmada";
+      alert("✅ Fianza / Garantía marcada como COBRADA.\nEl estado pasará a Confirmada al pulsar GUARDAR.");
+    });
+
+    document.getElementById("btnSendWhatsAppPaygoldRte")?.addEventListener("click", () => {
+      const phoneInput = document.getElementById("campoTelefono");
+      const linkInput = document.getElementById("campoPaygoldLink");
+      const refInput = document.getElementById("campoPaygoldRef");
+      const amountInput = document.getElementById("campoPaygoldAmount");
+      const nameInput = document.getElementById("campoNombre");
+      const fechaInput = document.getElementById("campoFecha");
+      const horaInput = document.getElementById("campoHora");
+      const paxInput = document.getElementById("campoPax");
+
+      const phone = phoneInput ? phoneInput.value.replace(/\D/g, "") : "";
+      if (!phone || phone.length < 9) {
+        alert("⚠️ Por favor introduce un número de teléfono válido para enviar el WhatsApp.");
+        return;
+      }
+
+      const link = linkInput ? linkInput.value.trim() : "";
+      if (!link || !link.startsWith("http")) {
+        alert("⚠️ Es obligatorio pegar el enlace de pago PayGold generado en el TPV de Eurocaja antes de enviar el WhatsApp.");
+        linkInput?.focus();
+        return;
+      }
+
+      const hotelKey = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+      const hotelName = hotelKey === "Guadiana" ? "Sercotel Guadiana" : "Cumbria Spa&Hotel";
+      const cliente = nameInput ? nameInput.value.trim() : "Cliente";
+      const ref = refInput ? refInput.value.trim() : "";
+      const amount = amountInput ? amountInput.value.trim() : "0.00";
+      const fecha = fechaInput ? utils.formatDateES(new Date(fechaInput.value)) : "";
+      const hora = horaInput ? horaInput.value : "";
+      const pax = paxInput ? (paxInput.value || "1") : "1";
+
+      const msg = `Hola ${cliente}, te contactamos desde ${hotelName}. Para confirmar tu reserva del ${fecha} a las ${hora} (${pax} pax), te facilitamos el enlace oficial de fianza/garantía (${amount}€) a través de nuestra pasarela segura Eurocaja Rural:\n\n👉 Enlace de pago: ${link}\nCód. Pedido: ${ref}\n\n¡Muchas gracias!`;
+
+      const st = document.getElementById("campoPaygoldStatus");
+      if (st && st.value === "pendiente") st.value = "enlace_enviado";
+
+      const url = `https://api.whatsapp.com/send?phone=34${phone}&text=${encodeURIComponent(msg)}`;
+      window.open(url, "_blank");
+    });
+
     // DYNAMIC TOTALS LISTENERS
     const calcInputs = ["campoPrecio", "campoPax", "campoNinos", "campoPrecioNinos"];
     calcInputs.forEach(id => {
@@ -348,6 +425,7 @@
         else if (precioNin) { precioNin.style.display = "none"; if (euroNin) euroNin.style.display = "none"; }
         if (container) container.classList.remove("hidden");
         if (badgeDirecto) badgeDirecto.classList.add("hidden");
+        document.getElementById("sectionRestaurantePaygold")?.classList.add("hidden");
       } else {
         if (precioAdl) { precioAdl.disabled = false; }
         if (precioNin) { precioNin.disabled = false; }
@@ -357,6 +435,7 @@
         else if (precioNin) { precioNin.style.display = ""; if (euroNin) euroNin.style.display = ""; }
         if (container) container.classList.add("hidden");
         if (badgeDirecto) badgeDirecto.classList.remove("hidden");
+        document.getElementById("sectionRestaurantePaygold")?.classList.remove("hidden");
       }
     };
 
@@ -1523,6 +1602,16 @@
       if (detailContainer) detailContainer.classList.add("hidden");
     }
 
+    // [PAYGOLD] Set Hotel Credentials Display
+    const activeHotelRte = currentHotel;
+    const isGuadianaRte = activeHotelRte === "Guadiana";
+    const lblHotelRte = document.getElementById("lblHotelPaygoldRte");
+    const chipFucRte = document.getElementById("chipFucTerminalRte");
+    const linkTpvRte = document.getElementById("linkOpenTpvRte");
+    if (lblHotelRte) lblHotelRte.innerText = isGuadianaRte ? "Garantía PayGold (Eurocaja Rural)" : "Garantía PayGold (Cumbria Spa&Hotel)";
+    if (chipFucRte) chipFucRte.innerText = isGuadianaRte ? "168355840-001" : "TPV Cumbria";
+    if (linkTpvRte) linkTpvRte.href = "https://canales.redsys.es/portal";
+
     // Reset details
     document.getElementById("tipoIncluido").value = "hotel";
     document.getElementById("campoHabitacion").value = "";
@@ -1579,6 +1668,21 @@
     if (data) {
       // ... population logic ...
       document.getElementById("campoReferencia").value = data.referencia || data.id || "SIN REF";
+      // Populate PayGold
+      const elPayRef = document.getElementById("campoPaygoldRef");
+      if (elPayRef) elPayRef.value = data.paygoldRef || data.referencia || ("RES-" + Date.now().toString().slice(-6));
+      const elPayAmount = document.getElementById("campoPaygoldAmount");
+      if (elPayAmount) elPayAmount.value = (data.paygoldAmount !== undefined && data.paygoldAmount !== null && data.paygoldAmount !== '') ? data.paygoldAmount : (data.fianzaPagada || data.total || "");
+      const elPayStatus = document.getElementById("campoPaygoldStatus");
+      if (elPayStatus) elPayStatus.value = data.paygoldStatus || "pendiente";
+      const elPayLink = document.getElementById("campoPaygoldLink");
+      if (elPayLink) elPayLink.value = data.paygoldLink || "";
+      const elCardLast4 = document.getElementById("campoCardLast4");
+      if (elCardLast4) elCardLast4.value = data.cardLast4 || "";
+      const elCardExpiry = document.getElementById("campoCardExpiry");
+      if (elCardExpiry) elCardExpiry.value = data.cardExpiry || "";
+      const elCardBrand = document.getElementById("campoCardBrand");
+      if (elCardBrand) elCardBrand.value = data.cardBrand || "Visa";
       document.getElementById("campoNombre").value = data.nombre || data.cliente || "";
       document.getElementById("campoTelefono").value = data.telefono || "";
       document.getElementById("campoHora").value = data.hora || "";
@@ -1651,6 +1755,22 @@
       // Hide Header Metadata for new bookings
       const headerMetadata = document.getElementById("headerMetadata");
       if (headerMetadata) headerMetadata.classList.add("hidden");
+
+      // Reset PayGold for new booking
+      const elPayRef = document.getElementById("campoPaygoldRef");
+      if (elPayRef) elPayRef.value = "RES-" + Date.now().toString().slice(-6);
+      const elPayAmount = document.getElementById("campoPaygoldAmount");
+      if (elPayAmount) elPayAmount.value = "";
+      const elPayStatus = document.getElementById("campoPaygoldStatus");
+      if (elPayStatus) elPayStatus.value = "pendiente";
+      const elPayLink = document.getElementById("campoPaygoldLink");
+      if (elPayLink) elPayLink.value = "";
+      const elCardLast4 = document.getElementById("campoCardLast4");
+      if (elCardLast4) elCardLast4.value = "";
+      const elCardExpiry = document.getElementById("campoCardExpiry");
+      if (elCardExpiry) elCardExpiry.value = "";
+      const elCardBrand = document.getElementById("campoCardBrand");
+      if (elCardBrand) elCardBrand.value = "Visa";
     }
 
     const now = new Date();
@@ -2027,6 +2147,13 @@
       tipoIncluido: isServiceIncluded ? document.getElementById("tipoIncluido").value : null,
       campoHabitacion: isServiceIncluded ? document.getElementById("campoHabitacion").value.trim() : null,
       campoBono: isServiceIncluded ? document.getElementById("campoBono").value.trim() : null,
+      paygoldRef: document.getElementById("campoPaygoldRef") ? document.getElementById("campoPaygoldRef").value.trim() : "",
+      paygoldAmount: document.getElementById("campoPaygoldAmount") ? parseFloat(document.getElementById("campoPaygoldAmount").value) || 0 : 0,
+      paygoldStatus: document.getElementById("campoPaygoldStatus") ? document.getElementById("campoPaygoldStatus").value : "pendiente",
+      paygoldLink: document.getElementById("campoPaygoldLink") ? document.getElementById("campoPaygoldLink").value.trim() : "",
+      cardLast4: document.getElementById("campoCardLast4") ? document.getElementById("campoCardLast4").value.trim() : "",
+      cardExpiry: document.getElementById("campoCardExpiry") ? document.getElementById("campoCardExpiry").value.trim() : "",
+      cardBrand: document.getElementById("campoCardBrand") ? document.getElementById("campoCardBrand").value : "Visa",
       updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
 
@@ -2056,7 +2183,10 @@
           payload.salonBookingId = window.state?.currentReserva?.salonBookingId || id.replace("salon_", "");
           payload._isFromSalones = true;
         }
-        await db.collection("reservas_restaurante").doc(id).set(payload, { merge: true });
+        if (payload.paygoldStatus === 'garantizado' && (!payload.fianzaPagada || payload.fianzaPagada === 0)) {
+        payload.fianzaPagada = payload.paygoldAmount || 0;
+      }
+      await db.collection("reservas_restaurante").doc(id).set(payload, { merge: true });
 
         // 2-Way Sync to Salones
         if (payload.salonBookingId) {

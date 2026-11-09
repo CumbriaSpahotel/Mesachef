@@ -13,13 +13,40 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.15`
+- **Versión:** `v10.4.0`
 - **Última Actualización:** 09/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.4.0] - 09/11/2026
+- **Módulos:** Restaurante / Salones / Webhook / Service Worker
+- **Tipo de cambio:** MINOR
+- **Descripción:**
+  - **Restaurante (`restaurante.html` y `js/restaurante.js`)**:
+    - Añadida sección completa de *Garantía y Pago PayGold (Eurocaja Rural / Cumbria)* en la ventana modal de edición y creación de reservas.
+    - Soporte multi-hotel respetando la configuración activa (`Sercotel Guadiana: 168355840-001` vs `Cumbria Spa&Hotel: TPV Cumbria`).
+    - Campos integrados: Cód. Pedido (`RES-XXXXXX`), Fianza/Cobro (€), Estado Garantía (`pendiente`, `enlace_enviado`, `garantizado`), Enlace PayGold Redsys y Datos de Tarjeta de Referencia (últimos 4 dígitos `•••• •••• •••• [XXXX]`, caducidad y marca).
+    - Botones de acción: Copiar Cód. Pedido, Copiar Importe, Regenerar Cód., Fianza Cobrada rápida (`⚡`) y WhatsApp PayGold oficial con enlace bancario seguro.
+    - Indicador visual verde con tarjeta `💳 •••• XXXX` / `💳 PAGADO` en las tarjetas del planning cuando la fianza está pagada o garantizada.
+    - Ocultación automática del panel PayGold si el servicio está marcado como *Incluido*.
+  - **Salones (`salones.html` y `js/salones.js`)**:
+    - Añadida sección completa de *Garantía y Señal PayGold* en la modal de eventos.
+    - Soporte multi-hotel dinámico según el hotel seleccionado.
+    - Campos integrados: Cód. Pedido (`EVT-XXXXXX`), Señal Acordada (€), Estado Garantía/Señal, Enlace PayGold Redsys y Datos de Tarjeta de Referencia.
+    - Botones de acción: Copiar Cód. Pedido, Copiar Importe, Regenerar Cód., Señal Cobrada rápida (`⚡`) y WhatsApp Señal PayGold con enlace oficial.
+    - Indicador visual verde `💳 •••• XXXX` / `💳 PAGADO` en el planning de salones para eventos con señal garantizada o cobrada.
+    - Ocultación automática del panel PayGold si el evento está marcado como *Servicios Incluidos*.
+  - **Webhook Central Redsys / Eurocaja (`functions/index.js`)**:
+    - Enrutador multi-módulo inteligente: procesa notificaciones online para Restaurante (`RES-`), Salones (`EVT-` / `GRP-`), Spa (`SPA-`) y Grandes Eventos (`GE-`).
+    - **Registro y confirmación 100% automática del cobro**: al recibir la confirmación bancaria (código `0000-0099`), el webhook actualiza el estado de la reserva/evento a `confirmada`, el estado PayGold a `garantizado`, suma el importe a la fianza/señal pagada, almacena la referencia de tarjeta (`cardLast4`, marca y caducidad) y anota el pago en el historial de cobros.
+    - Sincronización cruzada automática entre reservas de restaurante y salones vinculados.
+    - Registro de auditoría transversal en la colección Firestore `auditoria_paygold`.
+  - **Cache y Service Worker (`sw.js`)**:
+    - Actualizado `CACHE_NAME` a `mesachef-matrix-v10.4.0` con purga forzada de cachés antiguas.
+    - Sincronizados query params de versión de scripts en `restaurante.html` y `salones.html` a `?v=10.4.0`.
 
 ### [v10.3.15] - 09/11/2026
 - **Módulos:** Grandes Eventos
