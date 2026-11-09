@@ -1440,7 +1440,22 @@
             $('pOldPax').value = oldTotal;
             // Guadiana PayGold fields
             if ($('pPaygoldRef')) {
-                $('pPaygoldRef').value = participant.paygoldRef || ('GE-' + (participant.referencia || (participant.id ? participant.id.slice(-6).toUpperCase() : Math.floor(100000 + Math.random() * 900000))));
+                let finalRef = participant.paygoldRef || '';
+                if (!finalRef) {
+                    if (participant.referencia) {
+                        finalRef = participant.referencia.startsWith('GE-') ? participant.referencia : ('GE-' + participant.referencia);
+                    } else if (participant.id) {
+                        let hash = 0;
+                        for (let i = 0; i < participant.id.length; i++) {
+                            hash = (hash * 31 + participant.id.charCodeAt(i)) % 900000;
+                        }
+                        finalRef = 'GE-' + (100000 + Math.abs(hash));
+                    } else {
+                        finalRef = 'GE-' + Math.floor(100000 + Math.random() * 900000);
+                    }
+                    participant.paygoldRef = finalRef;
+                }
+                $('pPaygoldRef').value = finalRef;
             }
             if ($('pChargeDate')) $('pChargeDate').value = participant.chargeDate || '';
             if ($('pPaygoldStatus')) $('pPaygoldStatus').value = participant.paygoldStatus || 'pendiente';

@@ -3,6 +3,9 @@
 
 <head>
   <meta charset="UTF-8" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>MesaChef Matrix · Grandes Eventos</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <!-- <link rel="manifest" href="manifest.json" /> -->
@@ -214,6 +217,13 @@
       box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
     }
   </style>
+  <script id="force-sw-refresh">
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs) {
+        regs.forEach(function(r) { r.update(); });
+      });
+    }
+  </script>
 </head>
 
 <body class="bg-slate-50 text-slate-800">
