@@ -106,8 +106,12 @@ exports.redsysWebhook = onRequest({ cors: true, invoker: 'public' }, async (req,
     console.log(`[PayGold Webhook] Notificación recibida para Pedido: ${order}, Importe: ${amountEuros}€, FUC: ${merchantCode}, Resp: ${responseCode}`);
 
     // 2. Comprobar firma si la clave secreta está configurada
-    if (REDSYS_SECRET_KEY) {
-      const sigCheck = verifySignature(merchantParamsRaw, receivedSignature, REDSYS_SECRET_KEY, order);
+    const cumbriaFuc = '168271567';
+    const cumbriaKey = 'T4o7OH9D6UTSo9B9xr2iRaP6I+7s4U8D';
+    const secretKeyToUse = (merchantCode === cumbriaFuc) ? cumbriaKey : (REDSYS_SECRET_KEY || null);
+
+    if (secretKeyToUse) {
+      const sigCheck = verifySignature(merchantParamsRaw, receivedSignature, secretKeyToUse, order);
       if (!sigCheck.verified) {
         console.error('[PayGold Webhook] Error en la verificación de firma Redsys:', sigCheck);
         return res.status(403).send('Firma no válida');

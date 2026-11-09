@@ -13,13 +13,19 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.4.0`
+- **Versión:** `v10.4.1`
 - **Última Actualización:** 09/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.4.1] - 09/11/2026
+- **Módulos:** Restaurante / Salones / PayGold Service
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Integración directa de pasarela PayGold Redsys con 1 clic para Cumbria Spa & Hotel (FUC 168271567) con modal y reenvio de webhooks
 
 ### [v10.4.0] - 09/11/2026
 - **Módulos:** Restaurante / Salones / Webhook / Service Worker

@@ -136,7 +136,7 @@
                             <div class="flex flex-col leading-none">
                                 <h1 class="text-slate-800 font-bold text-lg tracking-tight">MesaChef</h1>
                                 <span
-                                    class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.4.0</span>
+                                    class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.4.1</span>
                             </div>
                         </div>
 
@@ -632,20 +632,25 @@
                             </div>
                         </div>
 
-                        <!-- Fila 3: Enlace generado en Eurocaja -->
+                        <!-- Fila 3: Enlace generado -->
                         <div class="mb-2">
                             <label class="block text-[9px] font-bold text-emerald-800 uppercase tracking-wider mb-0.5 flex justify-between">
-                                <span>Enlace PayGold generado en Eurocaja</span>
-                                <span class="text-red-500 text-[9px] font-semibold">(Obligatorio para WhatsApp)</span>
+                                <span id="lblPaygoldLinkDescRte">Enlace de Pago PayGold (Redsys)</span>
+                                <span id="lblPaygoldReqMsgRte" class="text-emerald-700 font-bold" style="font-size:9px;">⚡ 1 Clic para generar o pegar</span>
                             </label>
                             <input type="url" id="campoPaygoldLink" class="w-full font-mono text-[11px] border border-emerald-300 rounded px-2 py-1 bg-white h-7 focus:ring-1 focus:ring-emerald-500" placeholder="https://sis.redsys.es/sis/p2f?t=...">
                         </div>
 
                         <!-- Fila 4: Botones de Acción -->
                         <div class="flex justify-between items-center pt-1.5 border-t border-emerald-200">
-                            <a id="linkOpenTpvRte" href="https://canales.redsys.es/portal" target="_blank" rel="noopener noreferrer" class="text-[11px] font-bold text-emerald-800 hover:underline flex items-center gap-1">
-                                <span>🌐 Abrir TPV Eurocaja</span>
-                            </a>
+                            <div class="flex items-center gap-1.5">
+                                <button type="button" id="btnGenerarPaygoldRedsysRte" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-2.5 py-1 rounded text-[11px] flex items-center gap-1 shadow-sm transition">
+                                    <span>⚡</span> Generar Enlace Redsys
+                                </button>
+                                <a id="linkOpenTpvRte" href="https://canales.redsys.es/portal" target="_blank" rel="noopener noreferrer" class="text-[11px] font-bold text-emerald-800 hover:underline flex items-center gap-1 hidden">
+                                    <span>🌐 Abrir TPV Eurocaja</span>
+                                </a>
+                            </div>
                             <div class="flex gap-2">
                                 <button type="button" id="btnPayFullPendingRte" class="bg-emerald-50 text-emerald-700 border border-emerald-300 hover:bg-emerald-100 font-bold px-2 py-1 rounded text-[11px] flex items-center gap-1" title="Marcar fianza como cobrada">
                                     <span>⚡</span> Fianza Cobrada
@@ -720,6 +725,7 @@
     <!-- App Scripts -->
     <script src="js/app-common.js?v=10.3.13"></script>
     <script src="js/eventLocation.js?v=10.3.13"></script>
+    <script src="js/paygold-service.js?v=10.4.1"></script>
     <script src="js/restaurante.js?v=10.4.0"></script>
 
     <script>

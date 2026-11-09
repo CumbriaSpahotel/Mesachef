@@ -1338,14 +1338,30 @@
         // Default Jornada
         document.getElementById("evt-jornada").value = defaultJornada;
 
-        // [PAYGOLD] Set Hotel Credentials Display
+        // [PAYGOLD] Set Hotel Credentials Display (Cumbria Redsys vs Eurocaja Guadiana)
         const isGuadianaSalones = currentHotel === "Guadiana";
         const lblHotelSalones = document.getElementById("lblHotelPaygoldSalones");
         const chipFucSalones = document.getElementById("chipFucTerminalSalones");
         const linkTpvSalones = document.getElementById("linkOpenTpvSalones");
-        if (lblHotelSalones) lblHotelSalones.innerText = isGuadianaSalones ? "Garantía y Señal PayGold (Eurocaja Rural)" : "Garantía y Señal PayGold (Cumbria Spa&Hotel)";
-        if (chipFucSalones) chipFucSalones.innerText = isGuadianaSalones ? "168355840-001" : "TPV Cumbria";
-        if (linkTpvSalones) linkTpvSalones.href = "https://canales.redsys.es/portal";
+        const btnGenRedsysSalones = document.getElementById("btnGenerarPaygoldRedsysSalones");
+        const lblDescSalones = document.getElementById("lblPaygoldLinkDescSalones");
+        const lblReqSalones = document.getElementById("lblPaygoldReqMsgSalones");
+
+        if (lblHotelSalones) lblHotelSalones.innerText = isGuadianaSalones ? "Garantía y Señal PayGold (Eurocaja Rural)" : "Pasarela PayGold Redsys (Cumbria Spa & Hotel)";
+        if (chipFucSalones) chipFucSalones.innerText = isGuadianaSalones ? "168355840-001" : "168271567-001";
+        if (linkTpvSalones) {
+            linkTpvSalones.href = "https://canales.redsys.es/portal";
+            linkTpvSalones.classList.toggle("hidden", !isGuadianaSalones);
+        }
+        if (btnGenRedsysSalones) {
+            btnGenRedsysSalones.classList.toggle("hidden", isGuadianaSalones);
+        }
+        if (lblDescSalones) {
+            lblDescSalones.innerText = isGuadianaSalones ? "Enlace PayGold generado en Eurocaja" : "Enlace de Pago PayGold Redsys";
+        }
+        if (lblReqSalones) {
+            lblReqSalones.innerText = isGuadianaSalones ? "(Obligatorio para WhatsApp)" : "⚡ 1 Clic para generar o pegar";
+        }
 
         // PayGold field population
         const elSalonesPayRef = document.getElementById("evt-paygold-ref");
@@ -2712,6 +2728,38 @@
 
     // PAYGOLD LISTENERS (SALONES MULTIHOTEL)
     document.addEventListener("DOMContentLoaded", function () {
+        // GENERAR ENLACE REDSYS CUMBRIA (1 CLIC EN SALONES)
+        document.getElementById("btnGenerarPaygoldRedsysSalones")?.addEventListener("click", function () {
+            const currentHotel = getActiveHotel();
+            const cliente = document.getElementById("evt-nombre")?.value.trim() || "Cliente";
+            const phone = document.getElementById("evt-telefono")?.value.trim() || "";
+            const email = document.getElementById("evt-email")?.value.trim() || "";
+            const ref = document.getElementById("evt-paygold-ref")?.value.trim() || ("EVT-" + Date.now().toString().slice(-6));
+            const senalVal = parseFloat(document.getElementById("evt-paygold-amount")?.value) || 0;
+            const totalRaw = document.getElementById("evt-total")?.innerText || "";
+            const totalVal = window.MesaChef?.parseEuroInput ? window.MesaChef.parseEuroInput(totalRaw) : senalVal;
+
+            window.PayGoldService?.openGeneratorModal({
+                hotel: currentHotel,
+                customerName: cliente,
+                customerMobile: phone,
+                customerEmail: email,
+                referenceId: ref,
+                amount: senalVal,
+                total: totalVal || senalVal,
+                onSuccess: function (res) {
+                    const elLink = document.getElementById("evt-paygold-link");
+                    const elRef = document.getElementById("evt-paygold-ref");
+                    const elAmount = document.getElementById("evt-paygold-amount");
+                    const elStatus = document.getElementById("evt-paygold-status");
+                    if (elLink) elLink.value = res.paymentUrl;
+                    if (elRef && res.orderId) elRef.value = res.orderId;
+                    if (elAmount && res.amount) elAmount.value = res.amount;
+                    if (elStatus) elStatus.value = "enlace_enviado";
+                }
+            });
+        });
+
         document.getElementById("btnCopySalonesPaygoldRef")?.addEventListener("click", function () {
             const el = document.getElementById("evt-paygold-ref");
             if (el && el.value) {

@@ -319,6 +319,36 @@
     document.getElementById("btnNext").addEventListener("click", () => changeWeek(1));
 
     // PAYGOLD LISTENERS (MULTIHOTEL)
+    // GENERAR ENLACE REDSYS CUMBRIA (1 CLIC)
+    document.getElementById("btnGenerarPaygoldRedsysRte")?.addEventListener("click", () => {
+      const currentHotel = localStorage.getItem(STORAGE_KEY) || "Guadiana";
+      const name = document.getElementById("campoNombre")?.value.trim() || "Cliente";
+      const phone = document.getElementById("campoTelefono")?.value.trim() || "";
+      const ref = document.getElementById("campoPaygoldRef")?.value.trim() || ("RES-" + Date.now().toString().slice(-6));
+      const fianzaVal = parseFloat(document.getElementById("campoPaygoldAmount")?.value) || 0;
+      const totalRaw = document.getElementById("campoTotalDisplay")?.innerText || "";
+      const totalVal = window.MesaChef?.parseEuroInput ? window.MesaChef.parseEuroInput(totalRaw) : fianzaVal;
+
+      window.PayGoldService?.openGeneratorModal({
+        hotel: currentHotel,
+        customerName: name,
+        customerMobile: phone,
+        referenceId: ref,
+        amount: fianzaVal,
+        total: totalVal || fianzaVal,
+        onSuccess: (res) => {
+          const elLink = document.getElementById("campoPaygoldLink");
+          const elRef = document.getElementById("campoPaygoldRef");
+          const elAmount = document.getElementById("campoPaygoldAmount");
+          const elStatus = document.getElementById("campoPaygoldStatus");
+          if (elLink) elLink.value = res.paymentUrl;
+          if (elRef && res.orderId) elRef.value = res.orderId;
+          if (elAmount && res.amount) elAmount.value = res.amount;
+          if (elStatus) elStatus.value = "enlace_enviado";
+        }
+      });
+    });
+
     document.getElementById("btnCopyRtePaygoldRef")?.addEventListener("click", () => {
       const el = document.getElementById("campoPaygoldRef");
       if (el && el.value) {
@@ -1602,15 +1632,31 @@
       if (detailContainer) detailContainer.classList.add("hidden");
     }
 
-    // [PAYGOLD] Set Hotel Credentials Display
+    // [PAYGOLD] Set Hotel Credentials Display (Cumbria Redsys vs Eurocaja Guadiana)
     const activeHotelRte = currentHotel;
     const isGuadianaRte = activeHotelRte === "Guadiana";
     const lblHotelRte = document.getElementById("lblHotelPaygoldRte");
     const chipFucRte = document.getElementById("chipFucTerminalRte");
     const linkTpvRte = document.getElementById("linkOpenTpvRte");
-    if (lblHotelRte) lblHotelRte.innerText = isGuadianaRte ? "Garantía PayGold (Eurocaja Rural)" : "Garantía PayGold (Cumbria Spa&Hotel)";
-    if (chipFucRte) chipFucRte.innerText = isGuadianaRte ? "168355840-001" : "TPV Cumbria";
-    if (linkTpvRte) linkTpvRte.href = "https://canales.redsys.es/portal";
+    const btnGenRedsysRte = document.getElementById("btnGenerarPaygoldRedsysRte");
+    const lblDescRte = document.getElementById("lblPaygoldLinkDescRte");
+    const lblReqRte = document.getElementById("lblPaygoldReqMsgRte");
+
+    if (lblHotelRte) lblHotelRte.innerText = isGuadianaRte ? "Garantía PayGold (Eurocaja Rural)" : "Pasarela PayGold Redsys (Cumbria Spa & Hotel)";
+    if (chipFucRte) chipFucRte.innerText = isGuadianaRte ? "168355840-001" : "168271567-001";
+    if (linkTpvRte) {
+        linkTpvRte.href = "https://canales.redsys.es/portal";
+        linkTpvRte.classList.toggle("hidden", !isGuadianaRte);
+    }
+    if (btnGenRedsysRte) {
+        btnGenRedsysRte.classList.toggle("hidden", isGuadianaRte);
+    }
+    if (lblDescRte) {
+        lblDescRte.innerText = isGuadianaRte ? "Enlace PayGold generado en Eurocaja" : "Enlace de Pago PayGold Redsys";
+    }
+    if (lblReqRte) {
+        lblReqRte.innerText = isGuadianaRte ? "(Obligatorio para WhatsApp)" : "⚡ 1 Clic para generar o pegar";
+    }
 
     // Reset details
     document.getElementById("tipoIncluido").value = "hotel";
