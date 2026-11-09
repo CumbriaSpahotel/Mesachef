@@ -229,7 +229,7 @@
             <img src="Img/logo_mesa_chef.png" class="h-8 w-auto object-contain drop-shadow-sm" alt="MesaChef">
             <div class="flex flex-col leading-none">
               <h1 class="text-slate-800 font-bold text-lg tracking-tight">MesaChef</h1>
-              <span class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.3.13</span>
+              <span class="text-[10px] text-blue-600 font-bold uppercase tracking-widest -mt-0.5">Matrix v10.3.14</span>
             </div>
           </a>
           <div class="h-6 w-px bg-slate-200"></div>
@@ -730,6 +730,7 @@
                   placeholder="Importe (€)">
                 <button type="button" id="btnAddPayment" class="btn-primary"
                   style="height:36px; padding:0 14px; font-size:12px; font-weight:700; white-space:nowrap;">+ Añadir</button>
+                <button type="button" id="btnPayFullPending" class="btn-secondary" style="height:36px; padding:0 10px; font-size:11px; font-weight:800; white-space:nowrap; background:#f0fdf4; border:1px solid #86efac; color:#15803d; cursor:pointer;" title="Abonar automáticamente todo el importe pendiente">⚡ Todo</button>
               </div>
               <input type="hidden" id="pCollectionDate">
             </div>
@@ -801,7 +802,7 @@
                     <span>Cód. Pedido</span>
                     <div style="display:flex; gap:6px;"><button type="button" id="btnRegenPaygoldRef" title="Generar nuevo código para enviar otro enlace si cambian comensales o importes" style="background:none; border:none; color:#059669; cursor:pointer; font-size:11px; padding:0; text-decoration:underline; font-weight:700;">🔄 Nuevo Cód.</button><button type="button" id="btnCopyPaygoldRef" style="background:none; border:none; color:#2563eb; cursor:pointer; font-size:11px; padding:0; text-decoration:underline; font-weight:700;">📋 Copiar</button></div>
                   </label>
-                  <input type="text" id="pPaygoldRef" class="form-input font-mono font-bold" style="background:#ffffff; color:#0f172a; height:38px; font-size:12px;" placeholder="GE-XXXXX" readonly>
+                  <input type="text" id="pPaygoldRef" class="form-input font-mono font-bold" style="background:#ffffff; color:#0f172a; height:38px; font-size:12px; border:2px solid #86efac; border-radius:6px;" placeholder="GE-XXXXX" title="Código de Pedido (editable para conciliar manualmente con Eurocaja)">
                 </div>
 
                 <div class="form-group">
@@ -1035,7 +1036,7 @@
       }
     });
   </script>
-  <script src="js/grandes-eventos-bundled.js?v=10.3.10"></script>
+  <script src="js/grandes-eventos-bundled.js?v=10.3.14"></script>
 
   <!-- MODAL ENVIAR MENÚ WHATSAPP -->
   <div id="modalSendMenuWhatsApp" class="modal-overlay hidden">

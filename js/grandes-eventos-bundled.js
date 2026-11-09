@@ -782,7 +782,18 @@
         // PayGold Charge Date change listener
         $('pChargeDate')?.addEventListener('input', updateChargeAlertBadge);
         $('pChargeDate')?.addEventListener('change', updateChargeAlertBadge);
-        $('pPaygoldStatus')?.addEventListener('change', updatePaygoldStatusStyle);
+        $('pPaygoldStatus')?.addEventListener('change', () => {
+            updatePaygoldStatusStyle();
+            if ($('pPaygoldStatus')?.value === 'garantizado') {
+                const pending = parseFloat($('pPendingCalc')?.value || 0);
+                if (pending > 0) {
+                    const confirmAdd = confirm("Has marcado la reserva como 'Garantizado / Pagado'.\n\n¿Deseas registrar automáticamente el abono del importe pendiente (" + pending.toFixed(2) + " €) en el Historial de Pagos?");
+                    if (confirmAdd) {
+                        payFullPendingToModal();
+                    }
+                }
+            }
+        });
 
         // Card Last 4 digits only
         $('pCardLast4')?.addEventListener('input', function () {
@@ -862,6 +873,15 @@
                 btn.textContent = '✅ ¡Generado!';
                 setTimeout(() => { btn.textContent = orig; }, 2000);
             }
+        });
+
+        // Formateo y validación de Cód. Pedido al editarse manualmente
+        $('pPaygoldRef')?.addEventListener('input', (e) => {
+            let val = (e.target.value || '').trim().toUpperCase();
+            if (val && !val.startsWith('GE-') && /^\d+$/.test(val)) {
+                val = 'GE-' + val;
+            }
+            e.target.value = val;
         });
 
         $('btnCopyPaygoldRef')?.addEventListener('click', () => {
@@ -946,6 +966,7 @@
 
         $('btnCloseCancelForm')?.addEventListener('click', () => window.toggleCancelForm());
         $('btnAddPayment')?.addEventListener('click', addPaymentToModal);
+        $('btnPayFullPending')?.addEventListener('click', payFullPendingToModal);
         $('paymentsList')?.addEventListener('click', handlePaymentListClick);
         $('btnConfirmCancel')?.addEventListener('click', confirmCancel);
         $('btnShowCancel')?.addEventListener('click', () => {
@@ -1587,6 +1608,30 @@
             div.innerHTML = `<span>${formatDate(p.date)}</span><span class="font-bold text-slate-700">${formatCurrency(p.amount)}</span><button type="button" class="text-red-500 hover:text-red-700 btn-remove-pay" data-idx="${idx}">&times;</button>`;
             container.appendChild(div);
         });
+    }
+
+    function payFullPendingToModal() {
+        const pending = parseFloat($('pPendingCalc')?.value || 0);
+        if (pending > 0) {
+            const date = $('newPayDate')?.value || new Date().toISOString().split('T')[0];
+            state.modalPagos.push({
+                date,
+                amount: pending,
+                method: 'PayGold Eurocaja',
+                notes: 'Abono total registrado'
+            });
+            $('newPayDate').value = new Date().toISOString().split('T')[0];
+            $('newPayAmount').value = '';
+            renderModalPayments();
+            recalcModalFinancials();
+
+            if ($('pPaygoldStatus') && $('pPaygoldStatus').value !== 'garantizado') {
+                $('pPaygoldStatus').value = 'garantizado';
+                updatePaygoldStatusStyle();
+            }
+        } else {
+            alert('No hay importe pendiente por abonar.');
+        }
     }
 
     function addPaymentToModal() {

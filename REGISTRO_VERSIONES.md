@@ -13,13 +13,24 @@ Este documento mantiene el registro y control de versiones **único y global** p
 
 ## 📌 Versión Actual del Sistema
 
-- **Versión:** `v10.3.13`
-- **Última Actualización:** 03/11/2026
+- **Versión:** `v10.3.14`
+- **Última Actualización:** 09/11/2026
 - **Estado General:** Operativo en Producción (Matrix)
 
 ---
 
 ## 📝 Historial de Versiones
+
+### [v10.3.14] - 09/11/2026
+- **Módulos:** Grandes Eventos
+- **Tipo de cambio:** PATCH
+- **Descripción:**
+  - Desbloqueo del campo Cód. Pedido PayGold (`#pPaygoldRef`), retirando el bloqueo `readonly` para permitir edición libre y conciliación manual en caso de discrepancias con el TPV de Eurocaja Rural.
+  - Implementación de auto-formateo a mayúsculas y prefijo `GE-` al teclear o pegar códigos de pedido.
+  - Nuevo botón de cobro rápido `⚡ Todo` en el Historial de Pagos para abonar de 1 solo clic la totalidad del importe pendiente.
+  - Asistente de abono automático al cambiar el Estado de Garantía a `Garantizado / Pagado`, ofreciendo registrar directamente el pago pendiente sin pasos manuales.
+  - Alerta de seguridad al pulsar `🔄 Nuevo Cód.` si ya existía un enlace de Eurocaja pegado, evitando la desincronización entre el enlace de pago de Redsys y el pedido de la ficha.
+  - Cache buster actualizado en `grandes-eventos.html` a `?v=10.3.14`.
 
 ### [v10.3.13] - 03/11/2026
 - **Módulos:** Salones / Restaurante
