@@ -3,3 +3,14 @@ functions/node_modules/
 firebase-debug.log
 firebase-debug.*.log
 .firebase/
+
+# Secrets and local environment files
+.env
+.env.*
+!.env.example
+functions/.env
+functions/.env.*
+!functions/.env.example
+*.pem
+*.p12
+*.pfx
